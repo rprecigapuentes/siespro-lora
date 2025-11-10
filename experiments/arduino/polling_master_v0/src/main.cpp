@@ -17,7 +17,7 @@
 // SX1278 pins on Arduino UNO
 const int csPin    = 10; // NSS
 const int resetPin = 9;  // RESET
-const int irqPin   = 2;  // DIO0 (RX done)
+const int irqPin   = 3;  // DIO0 (RX done)
 
 // Poll messages
 const char* POLL_A = "POLL:A";
