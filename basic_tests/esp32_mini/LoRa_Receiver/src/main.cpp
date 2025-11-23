@@ -37,8 +37,8 @@ SX127XLT LT;                                   //create a library class instance
 
 // ESP32-C3 Mini LoRa pins (avoid strapping pins GPIO2, GPIO8, GPIO9)
 #define LORA_SCK   10                          //SCK pin for SPI
-#define LORA_MISO  5                           //MISO pin for SPI
-#define LORA_MOSI  6                           //MOSI pin for SPI
+#define LORA_MISO  6                           //MISO pin for SPI
+#define LORA_MOSI  5                           //MOSI pin for SPI
 
 #define NSS        7                           //select pin on LoRa device (NSS / CS)
 #define NRESET     3                           //reset pin on LoRa device
