@@ -8,8 +8,8 @@ import tty
 import os
 
 # Configuración del puerto serie
-PORT = "/dev/ttyACM0"   # ajusta esto
-BAUD = 9600             # ajusta según tu ESP32
+PORT = "/dev/ttyACM0"  
+BAUD = 9600           
 CSV_FILE = "mediciones_loRa.csv"
 
 
