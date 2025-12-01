@@ -5,7 +5,7 @@
       * Read local environmental data from the DHT11 and HW-080 soil moisture sensor.
       * Output a CSV line per successful TX+ACK with:
             temp_C, hum_air_pct, soil_moisture_pct, rssi_dBm, snr_dB
-      * Send the same data as JSON via HTTP POST to a REST API.
+      * Send the same data as JSON via HTTPS POST to a REST API.
 *******************************************************************************************************/
 
 #include <SPI.h>
@@ -17,12 +17,13 @@
 // WiFi network credentials
 #include <WiFi.h>
 #include <HTTPClient.h>
+#include <WiFiClientSecure.h>   // For HTTPS
 
 const char* ssid     = "Stee";
 const char* password = "123456789";
 
-// URL of the backend server (REST API endpoint)
-const char* serverUrl = "http://192.168.137.51:8086/sensors/data";
+// URL of the backend server (REST API endpoint, HTTPS)
+const char* serverUrl = "https://siespro.onrender.com/sensors/data";
 
 // ===================== LoRa / Radios =====================
 // LoRa radio driver instance
@@ -70,8 +71,8 @@ float lastH            = NAN;
 int   lastSoil         = 0;
 bool  lastSensorsValid = false;
 
-int16_t AckRSSI = 0;   // RSSI of the received ACK packet
-int8_t  AckSNR  = 0;   // SNR of the received ACK packet
+int16_t AckRSSI = 0;   // RSSI of the received ACK packet (LoRa link)
+int8_t  AckSNR  = 0;   // SNR of the received ACK packet (LoRa link)
 
 // ===================== Forward Declarations =====================
 void packet_is_OK();
@@ -83,7 +84,7 @@ void setup()
 {
   Serial.begin(115200);
   Serial.println();
-  Serial.println(F("Reliable LoRa Transmitter AutoACK + Sensors (ESP32) + HTTP API"));
+  Serial.println(F("Reliable LoRa Transmitter AutoACK + Sensors (ESP32) + HTTPS API"));
 
   // Initialize sensors
   dht.begin();
@@ -125,7 +126,7 @@ void setup()
   // ===================== WiFi Setup =====================
   Serial.println(F("Configuring WiFi..."));
 
-  // Begin WiFi connection
+  // Begin WiFi connection (DHCP)
   WiFi.begin(ssid, password);
   Serial.print(F("Connecting to WiFi"));
 
@@ -234,7 +235,7 @@ void loop()
       // TX and ACK were successful
       PayloadCRC = LT.getTXPayloadCRC(TXPacketL);
 
-      // Extract link-quality metrics from ACK
+      // Extract link-quality metrics from ACK (LoRa)
       AckRSSI = LT.readPacketRSSI();
       AckSNR  = LT.readPacketSNR();
 
@@ -256,7 +257,7 @@ void loop()
         Serial.print(AckSNR);
         Serial.println();
 
-        // ===================== JSON → HTTP POST to API =====================
+        // ===================== JSON → HTTPS POST to API =====================
         sendData(lastT, lastH, lastSoil, AckRSSI, (float)AckSNR);
       }
 
@@ -309,7 +310,7 @@ void packet_is_Error()
 }
 
 // ===================== HTTP Sender =====================
-// Sends JSON-encoded sensor and link data to the backend API
+// Sends JSON-encoded sensor and link data to the backend HTTPS API
 void sendData(float tempC, float humAir, int soilPct, int rssi, float snr)
 {
   if (WiFi.status() != WL_CONNECTED)
@@ -318,22 +319,29 @@ void sendData(float tempC, float humAir, int soilPct, int rssi, float snr)
     return;
   }
 
-  // Build JSON using the same order as the CSV output
-  // temp_C,hum_air_pct,soil_moisture_pct,rssi_dBm,snr_dB
+  // Build JSON with the exact keys expected by the backend:
+  // {
+  //   "temperatura": 21,
+  //   "humedad_relativa": 54.7,
+  //   "humedad_suelo": 0,
+  //   "rssi": -47,
+  //   "snr": 9
+  // }
   String jsonData = "{";
-  jsonData += "\"temp_C\": " + String(tempC, 2) + ",";
-  jsonData += "\"hum_air_pct\": " + String(humAir, 2) + ",";
-  jsonData += "\"soil_moisture_pct\": " + String(soilPct) + ",";
-  jsonData += "\"rssi_dBm\": " + String(rssi) + ",";
-  jsonData += "\"snr_dB\": " + String(snr, 2);
+  jsonData += "\"temperatura\": "      + String(tempC, 2) + ",";
+  jsonData += "\"humedad_relativa\": " + String(humAir, 2) + ",";
+  jsonData += "\"humedad_suelo\": "    + String(soilPct) + ",";
+  jsonData += "\"rssi\": "             + String(rssi) + ",";
+  jsonData += "\"snr\": "              + String(snr, 2);
   jsonData += "}";
 
   Serial.print(F("JSON to send: "));
   Serial.println(jsonData);
 
-  WiFiClient client;
-  HTTPClient http;
+  WiFiClientSecure client;
+  client.setInsecure();   // Disable certificate validation for demo purposes
 
+  HTTPClient http;
   http.begin(client, serverUrl);
   http.addHeader("Content-Type", "application/json");
 
