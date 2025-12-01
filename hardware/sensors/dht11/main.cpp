@@ -5,7 +5,7 @@
 #define DHTTYPE DHT11
 //DHTTYPE = DHT11, but there are also DHT22 and 21
 
-DHT dht(DHTPIN, DHTTYPE); // constructor to declare our sensor
+DHT dht(DHTPIN, DHTTYPE); // constructor to declare sensor
 
 void setup() {
   Serial.begin(115200);
