@@ -98,22 +98,51 @@ void setup()
 
 void loop()
 {
+  // ===================== Local Sensor Readings =====================
   float h = dht.readHumidity();
   float t = dht.readTemperature();
+  float f = dht.readTemperature(true);
 
-  if (isnan(h) || isnan(t)) {
+  Serial.println(F("=== Sensor readings ==="));
+
+  if (isnan(h) || isnan(t) || isnan(f))
+  {
+    Serial.println(F("DHT11 read failed"));
     lastSensorsValid = false;
-  } else {
+  }
+  else
+  {
+
+    Serial.print(F("DHT11  | Humidity: "));
+    Serial.print(h);
+    Serial.print(F("%  Temperature: "));
+    Serial.print(t);
+    Serial.print(F(" °C, "));
+    Serial.print(f);
+    Serial.println(F(" °F"));
+
+    // Store last valid sample for CSV output
     lastT = t;
     lastH = h;
     lastSensorsValid = true;
   }
 
+  Serial.println();
+
+  // ===================== Reliable Transmission with AutoACK =====================
   uint8_t attempts = TXattempts;
   TXPacketL = 0;
 
   do
   {
+    Serial.print(F("Transmit payload > "));
+    LT.printASCIIArray(buff, sizeof(buff));
+    Serial.println();
+    Serial.flush();
+
+    Serial.print(F("Send attempt "));
+    Serial.println(TXattempts - attempts + 1);
+
     TXPacketL = LT.transmitReliableAutoACK(
         buff,
         sizeof(buff),
@@ -123,33 +152,62 @@ void loop()
         TXpower,
         WAIT_TX
     );
-
     attempts--;
 
     if (TXPacketL > 0)
     {
+      // TX and ACK were successful
+      PayloadCRC = LT.getTXPayloadCRC(TXPacketL);
+
+      // Link quality for the ACK packet
       AckRSSI = LT.readPacketRSSI();
       AckSNR  = LT.readPacketSNR();
 
+      packet_is_OK();
+
+      // ===================== CSV Output for Dataset =====================
       if (lastSensorsValid)
       {
-        // única línea que imprime
-        Serial.print(lastT, 2);
-        Serial.print(",");
-        Serial.print(lastH, 2);
-        Serial.print(",");
+        // temp_C,hum_air_pct,rssi_dBm,snr_dB
+        Serial.println();
+        Serial.print(lastT);
+        Serial.print(F(","));
+        Serial.print(lastH);
+        Serial.print(F(","));
         Serial.print(AckRSSI);
-        Serial.print(",");
-        Serial.println(AckSNR);
+        Serial.print(F(","));
+        Serial.print(AckSNR);
+        Serial.println();
       }
+
+      Serial.println();
+    }
+    else
+    {
+      packet_is_Error();
+      Serial.println();
     }
 
     delay(500);
   }
   while ((TXPacketL == 0) && (attempts != 0));
 
+  if (TXPacketL > 0)
+  {
+    Serial.println(F("Packet acknowledged"));
+  }
+
+  if (attempts == 0)
+  {
+    Serial.print(F("No acknowledge after "));
+    Serial.print(TXattempts);
+    Serial.print(F(" attempts"));
+  }
+
+  Serial.println();
   delay(5000);
 }
+
 
 void packet_is_OK()
 {

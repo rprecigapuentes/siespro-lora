@@ -1,58 +1,84 @@
 /*******************************************************************************************************
-  Reliable LoRa Receiver with AutoACK (ESP32-C3 Mini)
-  - Based on example 210_Reliable_Receiver_AutoACK by Stuart Robinson.
-  - Listens for reliable packets and automatically sends ACK frames.
+  Programs for Arduino - Copyright of the author Stuart Robinson - 02/03/20
+
+  This program is supplied as is. It is up to the user to determine whether the program is suitable
+  for the intended purpose and free from errors.
 *******************************************************************************************************/
 
-#include <SPI.h>
-#include <SX127XLT.h>
+/*******************************************************************************************************
+  Program Operation
+  -----------------
+  This sketch implements a minimal LoRa receiver using the SX127XLT library. It listens for incoming
+  packets using the LoRa settings configured in LT.setupLoRa().
 
-SX127XLT LT;
+  The received packet is assumed to contain ASCII-printable text. If the packet contains non-ASCII
+  bytes (outside 0x20–0x7F), the serial output may show unexpected characters.
+
+  Example output (valid packet):
+      8s  Hello World 1234567890*,RSSI,-44dBm,SNR,9dB,Length,23,Packets,7,Errors,0,IRQreg,50
+
+  Example output (CRC error):
+      137s PacketError,RSSI,-89dBm,SNR,-8dB,Length,23,Packets,37,Errors,2,IRQreg,70,
+           IRQ_HEADER_VALID,IRQ_CRC_ERROR,IRQ_RX_DONE
+
+  Example timeout (no packets in 10 seconds):
+      112s RXTimeout
+
+  For more advanced receiver options see example "104_LoRa_Receiver".
+
+  Serial monitor baud rate: 115200
+*******************************************************************************************************/
+
+#include <Arduino.h>        // Required for ESP32 and Arduino framework
+#include <SPI.h>            // SX127x LoRa module communicates via SPI
+#include <SX127XLT.h>       // SX127x LoRa driver library
+
+SX127XLT LT;                // Create LoRa driver instance
 
 // ===================== LoRa Pin Definitions (ESP32-C3 Mini) =====================
-#define LORA_SCK   10
-#define LORA_MISO  6
-#define LORA_MOSI  5
+// These pins avoid strapping pins such as GPIO2, GPIO8, GPIO9.
+#define LORA_SCK   10       // SPI SCK
+#define LORA_MISO  6        // SPI MISO
+#define LORA_MOSI  5        // SPI MOSI
 
-#define NSS        7
-#define NRESET     3
-#define DIO0       2
+#define NSS        7        // LoRa chip select (NSS / CS)
+#define NRESET     3        // LoRa reset pin
+#define DIO0       2        // LoRa DIO0 interrupt pin (RX/TX done)
 
 #define LORA_DEVICE DEVICE_SX1278
+#define RXBUFFER_SIZE 255   // Maximum payload size to receive
 
-// ===================== Reliable / AutoACK Configuration =====================
-#define ACKdelay  100      // delay (ms) before sending ACK
-#define RXtimeout 60000    // RX timeout (ms)
-#define TXpower   2        // ACK transmit power (dBm)
+// ===================== Packet Statistics =====================
+uint32_t RXpacketCount = 0;   // Total received packets
+uint32_t errors = 0;          // Total packet errors
 
-const uint8_t RXBUFFER_SIZE = 251;
-uint8_t RXBUFFER[RXBUFFER_SIZE];
+// ===================== RX Buffers and Metadata =====================
+uint8_t RXBUFFER[RXBUFFER_SIZE];  // Buffer to hold received data
+uint8_t RXPacketL;                // Length of last received packet
+int16_t PacketRSSI;               // RSSI of received packet
+int8_t  PacketSNR;                // SNR of received packet
 
-uint8_t  RXPacketL;
-uint8_t  RXPayloadL;
-uint8_t  PacketOK;
-int16_t  PacketRSSI;
-uint16_t LocalPayloadCRC;
-uint16_t RXPayloadCRC;
-uint16_t TransmitterNetworkID;
-
-const uint16_t NetworkID = 0x3210;
-
-// ===================== Forward Declarations =====================
+// Function prototypes
 void packet_is_OK();
 void packet_is_Error();
-void printPacketDetails();
+void printElapsedTime();
 
 
+/*******************************************************************************************************
+  SETUP
+*******************************************************************************************************/
 void setup()
 {
-  Serial.begin(115200);
+  Serial.begin(9600);
+  delay(2000);    // Allow USB CDC to enumerate before printing
   Serial.println();
-  Serial.println(F("Reliable LoRa Receiver AutoACK (ESP32-C3 Mini)"));
+  Serial.println(F("4_LoRa_Receiver Starting"));
+  Serial.println();
 
   // Initialize SPI with explicit pin mapping for ESP32-C3 Mini
   SPI.begin(LORA_SCK, LORA_MISO, LORA_MOSI, NSS);
 
+  // Initialize LoRa module
   if (LT.begin(NSS, NRESET, DIO0, LORA_DEVICE))
   {
     Serial.println(F("LoRa device found"));
@@ -63,96 +89,131 @@ void setup()
     Serial.println(F("No LoRa device responding"));
     while (1)
     {
-      delay(2000);
+      delay(2000);    // Prevent watchdog resets
     }
   }
 
+  // Configure LoRa modem
   LT.setupLoRa(
-      434000000,   // carrier frequency (Hz)
-      0,           // frequency offset
-      LORA_SF7,    // spreading factor
-      LORA_BW_125, // bandwidth
-      LORA_CR_4_5, // coding rate
-      LDRO_AUTO    // low data rate optimization
+      434000000,   // Frequency (Hz)
+      0,           // Frequency offset
+      LORA_SF7,    // Spreading factor
+      LORA_BW_125, // Bandwidth
+      LORA_CR_4_5, // Coding rate
+      LDRO_AUTO    // Low-data-rate optimization
   );
 
-  Serial.println(F("Receiver ready"));
+  Serial.print(F("Receiver ready - RXBUFFER_SIZE "));
+  Serial.println(RXBUFFER_SIZE);
   Serial.println();
 }
 
 
+/*******************************************************************************************************
+  LOOP
+*******************************************************************************************************/
 void loop()
 {
-  // Wait for a reliable packet and send an AutoACK when valid
-  PacketOK = LT.receiveReliableAutoACK(
-      RXBUFFER,
-      RXBUFFER_SIZE,
-      NetworkID,
-      ACKdelay,
-      TXpower,
-      RXtimeout,
-      WAIT_RX
-  );
+  // Wait up to 60 seconds (60000 ms) for a packet.
+  RXPacketL = LT.receive(RXBUFFER, RXBUFFER_SIZE, 60000, WAIT_RX);
 
-  RXPacketL  = LT.readRXPacketL();
-  RXPayloadL = RXPacketL - 4;          // last 4 bytes are NetworkID + CRC
-  PacketRSSI = LT.readPacketRSSI();
+  PacketRSSI = LT.readPacketRSSI();   // Read RSSI of last received packet
+  PacketSNR  = LT.readPacketSNR();    // Read SNR of last received packet
 
-  if (PacketOK > 0)
+  if (RXPacketL == 0)
   {
-    packet_is_OK();
+    // Packet failed validation at LoRa hardware level (CRC / header)
+    packet_is_Error();
   }
   else
   {
-    packet_is_Error();
+    packet_is_OK();
   }
 
   Serial.println();
 }
 
 
+/*******************************************************************************************************
+  VALID PACKET HANDLER
+*******************************************************************************************************/
 void packet_is_OK()
 {
-  Serial.print(F("Payload received OK > "));
-  LT.printASCIIPacket(RXBUFFER, RXPayloadL);
-  Serial.println();
+  uint16_t IRQStatus;
 
-  printPacketDetails();
-  Serial.println();
+  RXpacketCount++;
+  IRQStatus = LT.readIrqStatus();      // Read IRQ flags from LoRa device
+  //printElapsedTime();                  // Print uptime in seconds
+
+  //Serial.print(F("  "));
+
+  // Print received ASCII payload
+  LT.printASCIIPacket(RXBUFFER, RXPacketL);
+
+  // Append metadata: RSSI, SNR, packet length, counters, IRQ flags
+  //Serial.print(F(",RSSI,"));
+  Serial.print(F(","));
+  Serial.print(PacketRSSI);
+  //Serial.print(F("dBm,SNR,"));
+  Serial.print(F(","));
+  Serial.print(PacketSNR);
+  //Serial.print(F("dB,Length,"));
+  //Serial.print(RXPacketL);
+  //Serial.print(F(",Packets,"));
+  //Serial.print(RXpacketCount);
+  //Serial.print(F(",Errors,"));
+  //Serial.print(errors);
+  //Serial.print(F(",IRQreg,"));
+  //Serial.print(IRQStatus, HEX);
 }
 
 
+/*******************************************************************************************************
+  ERROR HANDLER
+*******************************************************************************************************/
 void packet_is_Error()
 {
   uint16_t IRQStatus = LT.readIrqStatus();
 
-  Serial.print(F("Error "));
+  printElapsedTime();
 
   if (IRQStatus & IRQ_RX_TIMEOUT)
   {
-    Serial.print(F("RX timeout"));
+    // No packet received before timeout
+    Serial.print(F(" RXTimeout"));
   }
   else
   {
-    printPacketDetails();
+    // Packet received but failed CRC or header validation
+    errors++;
+    //Serial.print(F(" PacketError"));
+    //Serial.print(F(",RSSI,"));
+    Serial.print(F(","));
+    Serial.print(PacketRSSI);
+    //Serial.print(F("dBm,SNR,"));
+    Serial.print(F(","));
+    Serial.print(PacketSNR);
+    //Serial.print(F("dB,Length,"));
+    //Serial.print(LT.readRXPacketL());
+    //Serial.print(F(",Packets,"));
+    //Serial.print(RXpacketCount);
+    //Serial.print(F(",Errors,"));
+    //Serial.print(errors);
+    //Serial.print(F(",IRQreg,"));
+    //Serial.print(IRQStatus, HEX);
+
+    // Print human-readable names of IRQ flags
+    //LT.printIrqStatus();
   }
 }
 
 
-void printPacketDetails()
+/*******************************************************************************************************
+  PRINT ELAPSED TIME (SECONDS)
+*******************************************************************************************************/
+void printElapsedTime()
 {
-  LocalPayloadCRC      = LT.CRCCCITT(RXBUFFER, RXPayloadL, 0xFFFF);
-  TransmitterNetworkID = LT.getRXNetworkID(RXPacketL);
-  RXPayloadCRC         = LT.getRXPayloadCRC(RXPacketL);
-
-  Serial.print(F("LocalNetworkID,0x"));
-  Serial.print(NetworkID, HEX);
-  Serial.print(F(",TransmitterNetworkID,0x"));
-  Serial.print(TransmitterNetworkID, HEX);
-  Serial.print(F(",LocalPayloadCRC,0x"));
-  Serial.print(LocalPayloadCRC, HEX);
-  Serial.print(F(",RXPayloadCRC,0x"));
-  Serial.print(RXPayloadCRC, HEX);
-
-  LT.printReliableStatus();
+  float seconds = millis() / 1000.0;
+  //Serial.print(seconds, 0);
+  //Serial.print(F("s"));
 }

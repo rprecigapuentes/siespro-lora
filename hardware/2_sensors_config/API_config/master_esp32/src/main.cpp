@@ -2,10 +2,10 @@
   Reliable LoRa Transmitter with AutoACK (ESP32)
   - Based on example 209_Reliable_Transmitter_AutoACK by Stuart Robinson.
   - Extended to:
-      * Read local environmental data from the DHT11.
+      * Read local environmental data from the DHT11 and HW-080 soil moisture sensor.
       * Output a CSV line per successful TX+ACK with:
-            temp_C, hum_air_pct, rssi_dBm, snr_dB
-      * Send the same data (sin humedad de suelo) as JSON via HTTPS POST to a REST API.
+            temp_C, hum_air_pct, soil_moisture_pct, rssi_dBm, snr_dB
+      * Send the same data as JSON via HTTPS POST to a REST API.
 *******************************************************************************************************/
 
 #include <SPI.h>
@@ -60,9 +60,15 @@ uint8_t  TXPacketL;
 #define DHTTYPE DHT11
 DHT dht(DHTPIN, DHTTYPE);
 
+// ===================== HW-080 Soil Moisture Sensor =====================
+// Soil moisture sensor (analog)
+const int soilSensorPin = 33;
+int       soilPercent   = 0;
+
 // ===================== Last Sensor Sample (used for CSV & JSON) =====================
 float lastT            = NAN;
 float lastH            = NAN;
+int   lastSoil         = 0;
 bool  lastSensorsValid = false;
 
 int16_t AckRSSI = 0;   // RSSI of the received ACK packet (LoRa link)
@@ -71,17 +77,18 @@ int8_t  AckSNR  = 0;   // SNR of the received ACK packet (LoRa link)
 // ===================== Forward Declarations =====================
 void packet_is_OK();
 void packet_is_Error();
-void sendData(float tempC, float humAir, int rssi, float snr);
+void sendData(float tempC, float humAir, int soilPct, int rssi, float snr);
 
 // ===================== Setup =====================
 void setup()
 {
   Serial.begin(115200);
   Serial.println();
-  Serial.println(F("Reliable LoRa Transmitter AutoACK + DHT11 (ESP32) + HTTPS API"));
+  Serial.println(F("Reliable LoRa Transmitter AutoACK + Sensors (ESP32) + HTTPS API"));
 
   // Initialize sensors
   dht.begin();
+  pinMode(soilSensorPin, INPUT);
 
   // Initialize LoRa SPI interface
   SPI.begin(LORA_SCK, LORA_MISO, LORA_MOSI, NSS);
@@ -113,7 +120,7 @@ void setup()
 
   Serial.println(F("Transmitter ready"));
   Serial.println();
-  Serial.println(F("CSV format: temp_C,hum_air_pct,rssi_dBm,snr_dB"));
+  Serial.println(F("CSV format: temp_C,hum_air_pct,soil_moisture_pct,rssi_dBm,snr_dB"));
   Serial.println();
 
   // ===================== WiFi Setup =====================
@@ -173,6 +180,9 @@ void loop()
   }
   else
   {
+    // Convert raw ADC soil moisture value to 0–100% scale
+    soilPercent = map(analogRead(soilSensorPin), 4092, 0, 0, 100);
+
     Serial.print(F("DHT11  | Humidity: "));
     Serial.print(h);
     Serial.print(F("%  Temperature: "));
@@ -181,9 +191,14 @@ void loop()
     Serial.print(f);
     Serial.println(F(" °F"));
 
+    Serial.print(F("HW-080 | Soil moisture: "));
+    Serial.print(soilPercent);
+    Serial.println(F(" %"));
+
     // Store last valid sample for CSV + JSON output
     lastT            = t;
     lastH            = h;
+    lastSoil         = soilPercent;
     lastSensorsValid = true;
   }
 
@@ -229,11 +244,13 @@ void loop()
       // ===================== CSV Output for Dataset =====================
       if (lastSensorsValid)
       {
-        // CSV: temp_C,hum_air_pct,rssi_dBm,snr_dB
+        // CSV: temp_C,hum_air_pct,soil_moisture_pct,rssi_dBm,snr_dB
         Serial.println();
         Serial.print(lastT);
         Serial.print(F(","));
         Serial.print(lastH);
+        Serial.print(F(","));
+        Serial.print(lastSoil);
         Serial.print(F(","));
         Serial.print(AckRSSI);
         Serial.print(F(","));
@@ -241,7 +258,7 @@ void loop()
         Serial.println();
 
         // ===================== JSON → HTTPS POST to API =====================
-        sendData(lastT, lastH, AckRSSI, (float)AckSNR);
+        sendData(lastT, lastH, lastSoil, AckRSSI, (float)AckSNR);
       }
 
       Serial.println();
@@ -294,7 +311,7 @@ void packet_is_Error()
 
 // ===================== HTTP Sender =====================
 // Sends JSON-encoded sensor and link data to the backend HTTPS API
-void sendData(float tempC, float humAir, int rssi, float snr)
+void sendData(float tempC, float humAir, int soilPct, int rssi, float snr)
 {
   if (WiFi.status() != WL_CONNECTED)
   {
@@ -302,16 +319,18 @@ void sendData(float tempC, float humAir, int rssi, float snr)
     return;
   }
 
-  // Build JSON with the keys expected by the backend (sin humedad_suelo):
+  // Build JSON with the exact keys expected by the backend:
   // {
   //   "temperatura": 21,
   //   "humedad_relativa": 54.7,
+  //   "humedad_suelo": 0,
   //   "rssi": -47,
   //   "snr": 9
   // }
   String jsonData = "{";
   jsonData += "\"temperatura\": "      + String(tempC, 2) + ",";
   jsonData += "\"humedad_relativa\": " + String(humAir, 2) + ",";
+  jsonData += "\"humedad_suelo\": "    + String(soilPct) + ",";
   jsonData += "\"rssi\": "             + String(rssi) + ",";
   jsonData += "\"snr\": "              + String(snr, 2);
   jsonData += "}";
