@@ -11,8 +11,8 @@ SX127XLT LT;
 
 // ===================== LoRa Pin Definitions (ESP32-C3 Mini) =====================
 #define LORA_SCK   10
-#define LORA_MISO  6
-#define LORA_MOSI  5
+#define LORA_MISO  5
+#define LORA_MOSI  6
 
 #define NSS        7
 #define NRESET     3

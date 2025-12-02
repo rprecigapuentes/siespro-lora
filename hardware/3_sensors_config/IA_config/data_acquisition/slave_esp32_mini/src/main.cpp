@@ -38,8 +38,8 @@ SX127XLT LT;                // Create LoRa driver instance
 // ===================== LoRa Pin Definitions (ESP32-C3 Mini) =====================
 // These pins avoid strapping pins such as GPIO2, GPIO8, GPIO9.
 #define LORA_SCK   10       // SPI SCK
-#define LORA_MISO  6        // SPI MISO
-#define LORA_MOSI  5        // SPI MOSI
+#define LORA_MISO  5        // SPI MISO
+#define LORA_MOSI  6        // SPI MOSI
 
 #define NSS        7        // LoRa chip select (NSS / CS)
 #define NRESET     3        // LoRa reset pin
