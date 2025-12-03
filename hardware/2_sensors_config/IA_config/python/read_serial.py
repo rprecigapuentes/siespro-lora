@@ -123,7 +123,7 @@ def main():
                 print(timestamp, temp, hum_aire, rssi, snr, f"label={label}")
 
                 # Limitar frecuencia de muestreo a 1 muestra cada 5 s
-                time.sleep(5)
+                time.sleep(3)
 
     finally:
         # Restaurar configuración del terminal
