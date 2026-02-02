@@ -186,6 +186,115 @@ Frontend visualization, user management, and policy enforcement are handled in *
 
 ---
 
+## Quick Start Tutorial
+
+This tutorial is designed to understand and validate the system quickly.
+
+### Requirements
+- 2 ESP32-based boards (1 master, 1 slave)
+- SX1278 LoRa modules
+- Arduino IDE
+- Python 3 (for labeling script)
+
+---
+
+### Step 1: Flash the Slave Node
+- Upload the **Reliable Receiver AutoACK** firmware
+- Verify:
+  - LoRa initialization
+  - Automatic ACK responses
+
+Expected output:
+
+```
+Receiver ready
+Payload received OK
+```
+
+
+---
+
+### Step 2: Flash the Master Node
+- Upload the **Reliable Transmitter + Sensors** firmware
+- Connect a DHT11 sensor
+- Verify:
+  - Sensor readings
+  - Successful TX + ACK cycles
+
+Expected CSV output:
+
+```
+temp_C,hum_air_pct,rssi_dBm,snr_dB
+```
+
+
+---
+
+### Step 3: Collect Dataset
+- Move the slave node:
+  - Inside the protected area
+  - Outside the perimeter
+- Collect Serial output
+- Save data as CSV
+
+---
+
+### Step 4: Label and Train
+- Use the provided Python script to:
+  - Label data (`inside` / `outside`)
+  - Train the Random Forest model
+
+---
+
+### Step 5: Online Inference
+- Start the backend API
+- Master node sends live data via HTTPS
+- API returns classification result:
+  - `inside`
+  - `outside`
+
+This completes the end-to-end demo.
+
+---
+
+## Summary
+
+### Problem Addressed
+- Student safety
+- Unauthorized exits
+- Privacy-preserving monitoring
+
+### Target Audience
+- Students
+- Educational institutions
+- School safety systems
+
+### Why It Improves Student Life
+- Prevents unsafe situations
+- Avoids invasive surveillance
+- Respects privacy and autonomy
+- Operates in low-connectivity environments
+
+### Submission Artifacts
+- GitHub repository with source code
+- Clear README and tutorial
+- Optional demo video recommended
+
+### Technology Scope
+- Hardware + software system
+- Beginner-friendly concept
+- Modular and extensible design
+
+### Intended Use Cases
+
+- Schools
+- Academic campuses
+- Controlled educational environments
+
+This project is **not intended for surveillance**, tracking, or behavioral analysis.
+
+---
+
 ## Disclaimer
 
 SIESPRO is a research and academic project.  
