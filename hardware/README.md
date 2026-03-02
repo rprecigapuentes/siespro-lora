@@ -1,145 +1,104 @@
-# Hardware Overview
+# SIESPRO — Hardware Subsystem
 
-This section documents the **hardware layer** of the SIESPRO project.  
-It focuses exclusively on **LoRa-based embedded nodes**, sensor acquisition, and communication with the backend API.
+[![ESP32](https://img.shields.io/badge/ESP32-Espressif-E7352C?logo=espressif&logoColor=white)](https://www.espressif.com/en/products/socs/esp32)
+[![ESP32-C3](https://img.shields.io/badge/ESP32--C3_Mini-Espressif-E7352C?logo=espressif&logoColor=white)](https://www.espressif.com/en/products/socs/esp32-c3)
+[![PlatformIO](https://img.shields.io/badge/PlatformIO-IDE-orange?logo=platformio&logoColor=white)](https://platformio.org/)
+[![Arduino](https://img.shields.io/badge/Framework-Arduino-00979D?logo=arduino&logoColor=white)](https://www.arduino.cc/)
+[![LoRa](https://img.shields.io/badge/LoRa-SX1278_433_MHz-4B9CD3)](https://www.semtech.com/products/wireless-rf/lora-connect/sx1278)
+[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![UNAL](https://img.shields.io/badge/UNAL-Bogotá-8B0000)](https://unal.edu.co/)
 
-The hardware system is built around **ESP32-family microcontrollers** and **SX1278 LoRa radios**, using the **SX12XX Reliable Packet library by Stuart Robinson** to ensure robust communication.
+Embedded firmware for the SIESPRO perimeter monitoring system.
+Implements a point-to-point LoRa network between a master node (ESP32) and a
+slave node (ESP32-C3 Mini) using Reliable Transmission with AutoACK.
+The link-quality metrics extracted from each ACK — RSSI and SNR — serve as
+features for a Random Forest classifier that determines whether the transmitter
+is inside or outside a defined perimeter.
 
----
-
-## Hardware Architecture
-
-The network follows a **star topology**:
-
-- One **master node**
-- One or more **slave nodes**
-- Slaves only listen and respond with automatic ACK frames
-- All sensing, data processing, and external communication are handled by the master
-
-LoRa communication is used **only to evaluate link quality**, not to transport sensor data.
-
----
-
-## Basic Communication Tests
-
-The hardware layer includes basic firmware examples intended to:
-
-- Verify correct SPI wiring and radio configuration
-- Validate LoRa transmission and reception
-- Confirm reliable packet exchange using **AutoACK**
-
-These tests use static payloads and are meant solely for hardware validation and link debugging.
+> **Sensor data is never transmitted over LoRa.** The radio link is used solely
+> as a measurement instrument to extract spatial RF features (RSSI, SNR).
+> Environmental data (temperature, humidity, soil moisture) is read locally by
+> the master node and sent directly to the backend API via HTTPS.
 
 ---
 
-## LoRa Communication Layer
+## System Architecture
 
-All nodes rely on the **SX12XX Reliable Packet protocol**, which provides:
+```mermaid
+flowchart LR
+    subgraph Master ["Master Node (ESP32)"]
+        DHT11["DHT11\ntemp / humidity"]
+        HW080["HW-080\nsoil moisture"]
+        MCU["ESP32"]
+        SX_TX["SX1278\nLoRa TX"]
 
-- Network ID filtering
-- Automatic ACK handling
-- Packet integrity via CRC
-- RSSI and SNR extraction from received ACK frames
+        DHT11 --> MCU
+        HW080 --> MCU
+        MCU --> SX_TX
+    end
 
-This abstraction allows the application logic to remain independent of low-level radio details.
+    subgraph Slave ["Slave Node (ESP32-C3 Mini)"]
+        SX_RX["SX1278\nLoRa RX + AutoACK"]
+    end
 
----
+    subgraph Backend ["Backend"]
+        API["REST API\nhttps://siespro.onrender.com"]
+        RF["Random Forest\nclassifier"]
+        API --> RF
+    end
 
-## Sensor-Based Configurations
-
-The system supports multiple operating modes depending on the deployment scenario.
-
----
-
-### ACK Configuration (Link Validation)
-
-- The master transmits a LoRa packet.
-- The slave automatically responds with an ACK.
-- No sensor data is transmitted via LoRa.
-- Used for:
-  - Range testing
-  - Link stability analysis
-  - RSSI and SNR characterization
-
----
-
-### IA Configuration (Dataset Acquisition)
-
-This mode is used to **collect labeled data for machine learning**.
-
-- Sensors are connected to the **master node**:
-  - Air temperature
-  - Air humidity
-- On each successful TX + ACK cycle:
-  - The following data is produced locally via Serial:
-    ```
-    temp_C, hum_air_pct, rssi_dBm, snr_dB
-    ```
-- A Python script is used to:
-  - Read the serial output
-  - Label samples as `inside` or `outside` the perimeter
-  - Generate a dataset for training a **Random Forest classifier**
-
-LoRa is used exclusively to extract **link-quality metrics**.
-
----
-
-### API Configuration (Online Inference)
-
-In this mode, the master node performs **real-time inference via the backend API**.
-
-- The master:
-  - Reads sensor data
-  - Sends a LoRa packet
-  - Extracts RSSI and SNR from the ACK
-- The collected data is sent to the backend via **HTTPS POST**.
-
-#### Example JSON payload:
-```json
-{
-  "temperatura": 21.5,
-  "humedad_relativa": 54.2,
-  "rssi": -47,
-  "snr": 9.3
-}
+    SX_TX -->|"TX: SIESPRO\nNetworkID 0x3210\n434 MHz / SF7"| SX_RX
+    SX_RX -->|"ACK: RSSI, SNR"| SX_TX
+    MCU -->|"HTTPS POST\nJSON: temp, hum, rssi, snr"| API
 ```
-- The backend:
-    
-    - Executes the trained Random Forest model
-        
-    - Returns whether the node is **inside or outside the protected perimeter**
-        
 
 ---
 
-## Multi-Node Operation
+## Repository Structure
 
-The same logic extends naturally to configurations with:
-
-- One master
-    
-- Multiple slaves
-    
-
-The master polls each slave sequentially, obtaining independent RSSI and SNR measurements per node, enabling spatial discrimination based on link quality.
+| Folder | Target Hardware | Purpose |
+|---|---|---|
+| `basic_tests/` | ESP32 + ESP32-C3 Mini | Point-to-point link validation |
+| `master_esp32/` | ESP32 | Main firmware — three operating modes |
+| `slave_esp32_mini/` | ESP32-C3 Mini | AutoACK responder — passive |
+| `sensors_esp32/` | ESP32 | Isolated sensor verification |
+| `library/` | — | SX12XX-LoRa driver (Stuart Robinson) |
 
 ---
 
-## Hardware Summary
+## Hardware Requirements
 
-- **Microcontrollers**: ESP32, ESP32-B, ESP32-C3 Mini
-    
-- **Radio Module**: SX1278 (433 MHz)
-    
-- **Protocol**: LoRa Reliable Packets with AutoACK
-    
-- **Sensors**: DHT11 (air temperature and humidity)
-    
-- **ML Workflow**:
-    
-    - Offline data labeling and training
-        
-    - Online inference via REST API
-        
+| Component | Model | Qty | Role |
+|---|---|---|---|
+| Microcontroller | ESP32 DevKit v1 | 1 | Master node |
+| Microcontroller | ESP32-C3 Mini | 1 | Slave node |
+| LoRa transceiver | SX1278 (433 MHz) | 2 | RF link |
+| Air sensor | DHT11 | 1 | Temperature + humidity |
+| Soil sensor | HW-080 | 1 | Soil moisture (optional) |
 
-This hardware layer is designed to be **modular**, **scalable**, and independent from frontend and backend implementations.
+---
+
+## Prerequisites
+
+- [PlatformIO IDE](https://platformio.org/install/ide?install=vscode) (VSCode extension)
+- Python 3.10+ — required only for `IA_config/dataset_tool/collect_dataset.py`
+- `pyserial` — `pip install pyserial`
+
+No additional library installation is needed. The SX12XX-LoRa driver is
+vendored locally under `library/` and resolved automatically by PlatformIO
+via `lib_extra_dirs` in each `platformio.ini`.
+
+---
+
+## Recommended Reading Order
+
+Follow this order when setting up the system for the first time:
+
+1. `library/` — understand the LoRa driver being used
+2. `sensors_esp32/` — verify each sensor independently
+3. `basic_tests/` — validate the LoRa link before adding logic
+4. `slave_esp32_mini/` — flash the slave node (unchanged across modes)
+5. `master_esp32/ACK_config/` — validate AutoACK end-to-end
+6. `master_esp32/IA_config/` — collect the training dataset
+7. `master_esp32/API_config/` — deploy online inference
+
