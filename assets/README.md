@@ -65,6 +65,9 @@ its real-world viability as a product. The outputs of this stage are:
   (Random Forest classifier), the Supabase cloud backend and the parent-facing
   web dashboard. This diagram is the canonical reference for understanding how
   the hardware, firmware, ML model and backend interact
+- [**`siespro_logo.png`**](siespro_logo.png) — Official SIESPRO logotype.
+  Used as the project's visual identity across documentation, the web platform
+  and the academic poster.
 
 ---
 
@@ -77,3 +80,5 @@ its real-world viability as a product. The outputs of this stage are:
 | `siespro_poster.pdf` | Convergence | Academic poster — TPI EXPOIDEAS 2025 |
 | `siespro_plan_negocios.pdf` | Convergence | Business plan |
 | `siespro_architecture_diagram.png` | Technical | System architecture diagram |
+| `siespro_logo.png` | — | Brand asset |
+

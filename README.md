@@ -82,7 +82,6 @@ assigned a startup role matching their engineering background:
 | `frontend_backend/` | Web dashboard (parent monitoring UI) and Supabase backend — REST API, real-time subscriptions and PostgreSQL schema. |
 | `3D_models/` | Enclosure and mounting models for the hardware nodes. |
 | `assets/` | Project documentation — academic poster (TPI EXPOIDEAS 2025), business plan, PESTEL analysis, infographic, architecture diagram and hardware photographs. |
-| `assets/` | Shared visual resources — logos and diagrams referenced across the repository. |
 
 Each folder contains a dedicated `README.md`. Start with the folder most
 relevant to your interest; the sections below suggest entry points by role.
