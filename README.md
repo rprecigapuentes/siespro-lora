@@ -81,7 +81,7 @@ assigned a startup role matching their engineering background:
 | `hardware/` | All ESP32 firmware — master node, slave node, sensor tests and basic link tests. Each subfolder contains its own README with pin mappings, operating modes and flash instructions. |
 | `frontend_backend/` | Web dashboard (parent monitoring UI) and Supabase backend — REST API, real-time subscriptions and PostgreSQL schema. |
 | `3D_models/` | Enclosure and mounting models for the hardware nodes. |
-| `docs/` | Project documentation — academic poster (TPI EXPOIDEAS 2025), business plan, PESTEL analysis, infographic, architecture diagram and hardware photographs. |
+| `assets/` | Project documentation — academic poster (TPI EXPOIDEAS 2025), business plan, PESTEL analysis, infographic, architecture diagram and hardware photographs. |
 | `assets/` | Shared visual resources — logos and diagrams referenced across the repository. |
 
 Each folder contains a dedicated `README.md`. Start with the folder most
@@ -92,7 +92,7 @@ relevant to your interest; the sections below suggest entry points by role.
 ## Entry Points by Role
 
 **I want to understand the project**
-→ Read [`docs/README.md`](docs/README.md) and review [`docs/siespro_poster.pdf`](docs/siespro_poster.pdf)
+→ Read [`assets/README.md`](assets/README.md) and review [`assets/siespro_poster.pdf`](assets/siespro_poster.pdf)
 
 **I want to run the hardware**
 → Start at [`hardware/README.md`](hardware/README.md) → follow the recommended reading order inside
@@ -101,7 +101,7 @@ relevant to your interest; the sections below suggest entry points by role.
 → Go to [`frontend_backend/README.md`](frontend_backend/README.md)
 
 **I want to see the physical device**
-→ See [`docs/siespro_prototipos.jpg`](docs/siespro_prototipos.jpg)
+→ See [`assets/siespro_prototipos.jpg`](assets/siespro_prototipos.jpg)
 
 ---
 
