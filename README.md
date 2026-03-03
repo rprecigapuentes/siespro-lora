@@ -58,6 +58,18 @@ parent-facing dashboard backed by Supabase.
 
 ---
 
+## Hardware Prototype
+
+<p align="center">
+  <img src="assets/siespro_prototipos.jpg" alt="SIESPRO Hardware Prototypes" width="900"/>
+</p>
+
+Both nodes were fully assembled and tested on-site during the data collection
+phase. Left: Hub Node (ESP32 + SX1278 + DHT11). Right: On Field Node
+(ESP32-C3 Mini + SX1278).
+
+---
+
 ## Team
 
 SIESPRO was built by a genuinely interdisciplinary team, with each member
