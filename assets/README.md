@@ -10,8 +10,8 @@ project from the **National University of Colombia — Bogotá campus** that goe
 beyond a purely technical implementation. The project was structured around two
 complementary axes: a **Design Thinking process** centered on the real needs of
 stakeholders, and a **PESTEL analysis** to evaluate the viability and context of
-the solution. The technical development — an RF-based perimeter classification
-system using LoRa and Machine Learning — is the direct result of that process,
+the solution. The technical development (an RF-based perimeter classification
+system using LoRa and Machine Learning) is the direct result of that process,
 not the starting point.
 
 The core problem addressed is **school child safety without compromising student
@@ -31,11 +31,11 @@ the primary stakeholders — parents and school administrators — confirming bo
 the existence of the safety concern and the rejection of surveillance-based
 approaches (cameras, GPS tracking). The outputs of this stage are:
 
-- **`siespro_infografia.pdf`** — Visual summary of the problem space, the
+- [**`siespro_infografia.pdf`**](assets/siespro_infografia.pdf) — Visual summary of the problem space, the
   stakeholder map and the key insight that motivated the solution: families want
   safety guarantees without exposing children to invasive monitoring.
 
-- **`siespro_slides.pdf`** — Presentation used during the divergence review.
+- [**`siespro_slides.pdf`**](assets/siespro_slides.pdf) — Presentation used during the divergence review.
   Contains the PESTEL analysis across the six dimensions (Political, Economic,
   Social, Technological, Environmental, Legal), the survey methodology, results
   and the opportunity framing that bridged the problem into the solution space.
@@ -45,12 +45,12 @@ approaches (cameras, GPS tracking). The outputs of this stage are:
 The convergence stage produced a defined, implementable solution and evaluated
 its real-world viability as a product. The outputs of this stage are:
 
-- **`siespro_poster.pdf`** — Academic poster presented at **TPI EXPOIDEAS 2025**,
-  the annual innovation fair of the National University of Colombia. Summarizes
+- [**`siespro_poster.pdf`**](siespro_poster.pdf) — Academic poster presented at **TPI EXPOIDEAS 2025**,
+  the semiannual innovation fair of the National University of Colombia. Summarizes
   the full project — problem, methodology, technical architecture, results and
   conclusions — in a single-page format for a general audience.
 
-- **`siespro_plan_negocios.pdf`** — Business plan developed to assess the
+- [**`siespro_plan_negocios.pdf`**](siespro_plan_negocios.pdf) — Business plan developed to assess the
   commercial and institutional viability of SIESPRO. Covers market analysis,
   value proposition, cost structure, revenue model and go-to-market strategy
   targeting Colombian educational institutions.
@@ -59,7 +59,7 @@ its real-world viability as a product. The outputs of this stage are:
 
 ## Technical Reference
 
-- **`siespro_architecture_diagram.png`** — System architecture diagram showing
+- [**`siespro_architecture_diagram.png`**](siespro_architecture_diagram.png) — System architecture diagram showing
   the data flow across all components: the On Field Node (ESP32-C3 Mini +
   SX1278), the Hub Node (ESP32 + sensors), the host-side ML inference engine
   (Random Forest classifier), the Supabase cloud backend and the parent-facing
