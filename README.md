@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <em>Sistema Inteligente de Seguridad y Permanencia Escolar</em>
+  <em>Sistema Estudiantil de Protección</em>
 </p>
 
 <p align="center">
@@ -92,16 +92,16 @@ relevant to your interest; the sections below suggest entry points by role.
 ## Entry Points by Role
 
 **I want to understand the project**
-→ Read `docs/README.md` and review `docs/siespro_poster.pdf`
+→ Read [`docs/README.md`](docs/README.md) and review [`docs/siespro_poster.pdf`](docs/siespro_poster.pdf)
 
 **I want to run the hardware**
-→ Start at `hardware/README.md` → follow the recommended reading order inside
+→ Start at [`hardware/README.md`](hardware/README.md) → follow the recommended reading order inside
 
 **I want to explore the ML model or backend**
-→ Go to `frontend_backend/README.md`
+→ Go to [`frontend_backend/README.md`](frontend_backend/README.md)
 
 **I want to see the physical device**
-→ See `docs/siespro_prototipos.jpg`
+→ See [`docs/siespro_prototipos.jpg`](docs/siespro_prototipos.jpg)
 
 ---
 
