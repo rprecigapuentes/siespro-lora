@@ -101,7 +101,7 @@ relevant to your interest; the sections below suggest entry points by role.
 → Go to `frontend_backend/README.md`
 
 **I want to see the physical device**
-→ See `docs/siespro_sensor_node.jpg`
+→ See `docs/siespro_prototipos.jpg`
 
 ---
 
