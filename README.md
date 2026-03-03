@@ -1,7 +1,7 @@
 # SIESPRO
 
 <p align="center">
-  <img src="assets/siespro_logo.png" alt="SIESPRO Logo" width="180"/>
+  <img src="assets/siespro_logo.png" alt="SIESPRO Logo" width="360"/>
 </p>
 
 <p align="center">
