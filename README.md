@@ -1,303 +1,127 @@
-# SIESPRO-LoRa
+# SIESPRO
 
-**SIESPRO-LoRa** is a LoRa-based student presence monitoring system designed for **educational institutions**, focused on **preventing unauthorized exits** while preserving **privacy and autonomy**.
+<p align="center">
+  <img src="assets/siespro_logo.png" alt="SIESPRO Logo" width="180"/>
+</p>
 
-The system provides a **non-intrusive alternative** to traditional location-tracking solutions by relying on **radio link characteristics** instead of explicit positioning, cameras, or personal identifiers.
+<p align="center">
+  <em>Sistema Inteligente de Seguridad y Permanencia Escolar</em>
+</p>
 
----
-
-## Problem Statement
-
-Educational institutions face a recurring challenge:
-
-- Detecting **unauthorized exits** of students from protected areas
-- Doing so **without invasive surveillance**
-- Avoiding dependence on:
-  - GPS tracking
-  - Continuous Wi-Fi connectivity
-  - Cameras or biometric systems
-
-Most existing solutions rely on **precise localization**, which introduces:
-- Privacy concerns
-- Infrastructure complexity
-- High energy consumption
-- Legal and ethical constraints
-
-SIESPRO addresses this gap by rethinking **presence detection**, not localization.
+<p align="center">
+  <a href="https://unal.edu.co/"><img src="https://img.shields.io/badge/UNAL-Bogotá-8B0000"/></a>
+  <a href="https://ssiespro.wixsite.com/website-159"><img src="https://img.shields.io/badge/Website-SIESPRO-4B9CD3"/></a>
+  <img src="https://img.shields.io/badge/TPI-EXPOIDEAS_2025-orange"/>
+  <img src="https://img.shields.io/badge/Methodology-Design_Thinking_+_PESTEL-6A0DAD"/>
+  <img src="https://img.shields.io/badge/ML-Random_Forest-green"/>
+  <a href="https://platformio.org/"><img src="https://img.shields.io/badge/Firmware-PlatformIO-orange?logo=platformio&logoColor=white"/></a>
+  <img src="https://img.shields.io/badge/LoRa-SX1278_433_MHz-4B9CD3"/>
+  <a href="https://supabase.com/"><img src="https://img.shields.io/badge/Backend-Supabase-3ECF8E?logo=supabase&logoColor=white"/></a>
+</p>
 
 ---
 
-## Project Objective
+SIESPRO is an interdisciplinary student project developed at the
+[National University of Colombia — Bogotá campus](https://unal.edu.co/)
+and presented at **TPI EXPOIDEAS 2025**, the university's annual innovation fair.
+The project addresses a tangible problem in Colombian school environments:
+**guaranteeing the physical safety of students without compromising their privacy.**
 
-The main objective of SIESPRO is to **classify whether a node is inside or outside a predefined perimeter**, without computing its physical position.
+The solution combines IoT hardware, LoRa wireless communication, environmental
+sensing, and a Machine Learning model trained from scratch — correlating
+ambient variables (temperature, humidity, soil moisture) with RF link-quality
+metrics (RSSI, SNR) to classify whether a student node is inside or outside
+a defined perimeter. No GPS, no cameras, no biometric data.
 
-This is achieved by combining:
+Beyond the technical development, SIESPRO was structured as a **simulated
+startup**, applying agile methodologies including **Design Thinking**,
+**PESTEL analysis**, **Kanban**, **EDT**, **TRL**, and stakeholder-centered
+divergence and convergence stages. A survey conducted with parents and school
+administrators validated the problem and confirmed demand for a
+privacy-preserving approach before any technical work began.
 
-- **LoRa radio link metrics**
-- **Environmental sensor data**
-- **Machine learning classification**
-
-The result is a system that answers a single, relevant question:
-
-> *Is this device inside or outside the authorized area?*
-
-Nothing more. Nothing unnecessary.
-
----
-
-## Core Design Principles
-
-### Privacy by Design
-
-- No GPS coordinates
-- No triangulation
-- No continuous tracking
-- No personal identifiers
-- No camera or audio data
-
-The system does **not know where someone is**, only whether they are **inside or outside** a permitted zone.
+> Visit the project website: [ssiespro.wixsite.com/website-159](https://ssiespro.wixsite.com/website-159)
 
 ---
 
-### Low Infrastructure Dependency
+## System Architecture
 
-- No local Wi-Fi network required for detection
-- LoRa is used for:
-  - Long-range communication
-  - Low power consumption
-  - Robust operation in complex environments
+<p align="center">
+  <img src="assets/siespro_architecture_diagram.png" alt="SIESPRO System Architecture" width="900"/>
+</p>
 
-Wi-Fi is used **only at the master node** and **only when needed** to communicate with the backend API.
-
----
-
-### Non-Intrusive Detection
-
-- Devices behave as anonymous nodes
-- Detection is based on:
-  - RSSI
-  - SNR
-  - Environmental context
-- No interaction required from the user
+The On Field Node (ESP32-C3 Mini) exchanges LoRa packets with the Hub Node
+(ESP32 + sensors). The Hub extracts RSSI and SNR from each ACK frame, bundles
+them with local sensor readings, and sends the feature vector to a cloud-hosted
+Random Forest classifier via HTTPS. The inference result feeds a real-time
+parent-facing dashboard backed by Supabase.
 
 ---
 
-## System Overview
+## Team
 
-The system follows a **star topology**:
+SIESPRO was built by a genuinely interdisciplinary team, with each member
+assigned a startup role matching their engineering background:
 
-- One **master node**
-- One or more **slave nodes**
-
-### Node Roles
-
-#### Slave Nodes
-- Listen for LoRa packets
-- Respond automatically with ACK frames
-- Do not collect or transmit sensor data
-- Do not connect to the internet
-
-#### Master Node
-- Polls slave nodes sequentially
-- Collects:
-  - RSSI and SNR from ACK responses
-  - Environmental sensor data
-- Sends aggregated data to the backend API
-- Receives classification results (inside / outside)
+| Role | Name | Discipline |
+|---|---|---|
+| CEO | Luis Guillermo Vaca Rincón | Electronic Engineering |
+| CTO | Rosemberth Steeven Preciga Puentes | Electronic Engineering |
+| CFO | Andrés Felipe Castillo Caicedo | Mechanical Engineering |
+| COO | Daniela Martínez Sierra | Civil Engineering |
+| CCO | Miguel Alejandro Bermúdez Claros | Agricultural Engineering |
+| CMO | Camila Stefany Garzón Parra | Anthropology |
 
 ---
 
-## Detection Strategy
+## Repository Structure
 
-SIESPRO does **not perform localization**.
+| Folder | Contents |
+|---|---|
+| `hardware/` | All ESP32 firmware — master node, slave node, sensor tests and basic link tests. Each subfolder contains its own README with pin mappings, operating modes and flash instructions. |
+| `frontend_backend/` | Web dashboard (parent monitoring UI) and Supabase backend — REST API, real-time subscriptions and PostgreSQL schema. |
+| `3D_models/` | Enclosure and mounting models for the hardware nodes. |
+| `docs/` | Project documentation — academic poster (TPI EXPOIDEAS 2025), business plan, PESTEL analysis, infographic, architecture diagram and hardware photographs. |
+| `assets/` | Shared visual resources — logos and diagrams referenced across the repository. |
 
-Instead, it performs **classification** based on:
-
-- Radio link quality (RSSI, SNR)
-- Environmental conditions (e.g., temperature, humidity)
-- Learned patterns from real deployments
-
-A **Random Forest model** is trained using labeled data collected on-site, allowing the system to adapt to:
-
-- Building layout
-- Materials
-- Environmental noise
-- Deployment-specific conditions
+Each folder contains a dedicated `README.md`. Start with the folder most
+relevant to your interest; the sections below suggest entry points by role.
 
 ---
 
-## Machine Learning Workflow
+## Entry Points by Role
 
-1. **Data Acquisition**
-   - Master node logs sensor data and link metrics
-   - Data is exported as CSV via Serial
+**I want to understand the project**
+→ Read `docs/README.md` and review `docs/siespro_poster.pdf`
 
-2. **Labeling**
-   - Samples are labeled as `inside` or `outside`
-   - Labeling is performed externally using a Python script
+**I want to run the hardware**
+→ Start at `hardware/README.md` → follow the recommended reading order inside
 
-3. **Training**
-   - A Random Forest classifier is trained offline
+**I want to explore the ML model or backend**
+→ Go to `frontend_backend/README.md`
 
-4. **Inference**
-   - The trained model runs on the backend API
-   - The master node sends live data for classification
+**I want to see the physical device**
+→ See `docs/siespro_sensor_node.jpg`
 
 ---
 
-## Technology Stack
+## Methodologies
 
-### Hardware
-- ESP32 family microcontrollers
-- SX1278 LoRa transceivers (433 MHz)
-- Environmental sensors (e.g., DHT11)
-
-### Communication
-- LoRa Reliable Packets with AutoACK
-- HTTPS REST API for backend communication
-
-### Backend
-- Random Forest classifier
-- REST API for inference responses
-
----
-
-## Intended Use Cases
-
-- Schools and educational institutions
-- Controlled academic environments
-- Safety-oriented monitoring systems
-- Scenarios where **privacy preservation is mandatory**
-
-This project is **not intended for surveillance**, tracking, or behavioral monitoring.
-
----
-
-## Project Scope
-
-SIESPRO focuses on:
-
-- Presence classification
-- Privacy-aware system design
-- Low-power, long-range communication
-- Explainable and adaptable ML-based detection
-
-Frontend visualization, user management, and policy enforcement are handled in **separate components** and repositories.
-
----
-
-## Quick Start Tutorial
-
-This tutorial is designed to understand and validate the system quickly.
-
-### Requirements
-- 2 ESP32-based boards (1 master, 1 slave)
-- SX1278 LoRa modules
-- Arduino IDE
-- Python 3 (for labeling script)
-
----
-
-### Step 1: Flash the Slave Node
-- Upload the **Reliable Receiver AutoACK** firmware
-- Verify:
-  - LoRa initialization
-  - Automatic ACK responses
-
-Expected output:
-
-```
-Receiver ready
-Payload received OK
-```
-
-
----
-
-### Step 2: Flash the Master Node
-- Upload the **Reliable Transmitter + Sensors** firmware
-- Connect a DHT11 sensor
-- Verify:
-  - Sensor readings
-  - Successful TX + ACK cycles
-
-Expected CSV output:
-
-```
-temp_C,hum_air_pct,rssi_dBm,snr_dB
-```
-
-
----
-
-### Step 3: Collect Dataset
-- Move the slave node:
-  - Inside the protected area
-  - Outside the perimeter
-- Collect Serial output
-- Save data as CSV
-
----
-
-### Step 4: Label and Train
-- Use the provided Python script to:
-  - Label data (`inside` / `outside`)
-  - Train the Random Forest model
-
----
-
-### Step 5: Online Inference
-- Start the backend API
-- Master node sends live data via HTTPS
-- API returns classification result:
-  - `inside`
-  - `outside`
-
-This completes the end-to-end demo.
-
----
-
-## Summary
-
-### Problem Addressed
-- Student safety
-- Unauthorized exits
-- Privacy-preserving monitoring
-
-### Target Audience
-- Students
-- Educational institutions
-- School safety systems
-
-### Why It Improves Student Life
-- Prevents unsafe situations
-- Avoids invasive surveillance
-- Respects privacy and autonomy
-- Operates in low-connectivity environments
-
-### Submission Artifacts
-- GitHub repository with source code
-- Clear README and tutorial
-- Optional demo video recommended
-
-### Technology Scope
-- Hardware + software system
-- Beginner-friendly concept
-- Modular and extensible design
-
-### Intended Use Cases
-
-- Schools
-- Academic campuses
-- Controlled educational environments
-
-This project is **not intended for surveillance**, tracking, or behavioral analysis.
+| Methodology | Application in SIESPRO |
+|---|---|
+| Design Thinking | Divergence / convergence stages — problem framing and solution validation with stakeholders |
+| PESTEL | Viability analysis across political, economic, social, technological, environmental and legal dimensions |
+| Kanban | Sprint task management across the team |
+| EDT (WBS) | Work breakdown structure for project planning |
+| TRL | Technology readiness level tracking from concept to demo |
+| Stakeholder mapping | Parents, school administrators and students as primary stakeholders |
 
 ---
 
 ## Disclaimer
 
-SIESPRO is a research and academic project.  
-Its effectiveness depends on proper calibration, data collection, and ethical deployment.
-
-The system is designed to **assist** institutional safety efforts, not replace human judgment.
+SIESPRO is an academic research project developed for educational purposes.
+System effectiveness depends on site-specific calibration and labeled data
+collection. The system is designed to assist institutional safety efforts
+and is **not intended for surveillance, behavioral tracking, or any use
+outside a consensual, institutional safety context.**
