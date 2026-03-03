@@ -31,11 +31,11 @@ the primary stakeholders — parents and school administrators — confirming bo
 the existence of the safety concern and the rejection of surveillance-based
 approaches (cameras, GPS tracking). The outputs of this stage are:
 
-- [**`siespro_infografia.pdf`**](assets/siespro_infografia.pdf) — Visual summary of the problem space, the
+- [**`siespro_infografia.pdf`**](siespro_infografia.pdf) — Visual summary of the problem space, the
   stakeholder map and the key insight that motivated the solution: families want
   safety guarantees without exposing children to invasive monitoring.
 
-- [**`siespro_slides.pdf`**](assets/siespro_slides.pdf) — Presentation used during the divergence review.
+- [**`siespro_slides.pdf`**](siespro_slides.pdf) — Presentation used during the divergence review.
   Contains the PESTEL analysis across the six dimensions (Political, Economic,
   Social, Technological, Environmental, Legal), the survey methodology, results
   and the opportunity framing that bridged the problem into the solution space.
