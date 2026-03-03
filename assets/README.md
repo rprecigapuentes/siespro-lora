@@ -5,7 +5,7 @@
 [![Methodology](https://img.shields.io/badge/Methodology-Design_Thinking_+_PESTEL-4B9CD3)]()
 [![Stage](https://img.shields.io/badge/Stage-Convergence-green)]()
 
-SIESPRO (*Sistema Inteligente de Seguridad y Permanencia Escolar*) is a student
+SIESPRO (*Sistema Estudiantil de Protección*) is a student
 project from the **National University of Colombia — Bogotá campus** that goes
 beyond a purely technical implementation. The project was structured around two
 complementary axes: a **Design Thinking process** centered on the real needs of
