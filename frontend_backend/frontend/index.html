@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIESPRO – Live Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        fondo: "#020408",
+                        fondoPanel: "#0A101F",
+                        primario: "#00D9FF",
+                        secundario: "#0066FF",
+                        acento: "#0EEFFF",
+                        alerta: "#FF3300",
+                        success: "#00FF66",
+                        offline: "#64748B", // Color para desconectados (Gris Azulado)
+                        texto: "#FFFFFF",
+                        textoGray: "#94A3B8"
+                    },
+                    fontFamily: { sans: ["Inter", "sans-serif"] },
+                    animation: {
+                        'pulse-dot': 'pulseDot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'scan-line': 'scanLine 3s linear infinite',
+                    },
+                    keyframes: {
+                        pulseDot: {
+                            "0%, 100%": { opacity: 1, transform: "scale(1)" },
+                            "50%": { opacity: 0.5, transform: "scale(1.5)" }
+                        },
+                        scanLine: {
+                            "0%": { top: "0%" },
+                            "100%": { top: "100%" }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #020408; }
+        ::-webkit-scrollbar-thumb { background: #0066FF; border-radius: 4px; }
+        .hidden-section { display: none !important; }
+        .neon-text { text-shadow: 0 0 10px currentColor; }
+        .grayscale-element { filter: grayscale(100%); opacity: 0.5; }
+    </style>
+</head>
+
+<body class="bg-fondo text-texto font-sans antialiased h-screen flex flex-col">
+
+    <section id="login-section" class="flex-1 flex items-center justify-center relative overflow-hidden">
+        <div class="absolute inset-0 opacity-30 pointer-events-none" 
+             style="background-image: linear-gradient(#0066FF 1px, transparent 1px), linear-gradient(90deg, #0066FF 1px, transparent 1px); background-size: 40px 40px;">
+        </div>
+        
+        <div class="z-10 bg-fondoPanel p-8 rounded-2xl border border-primario/30 shadow-[0_0_60px_rgba(0,217,255,0.2)] w-full max-w-md text-center relative">
+            <div class="mb-6 flex justify-center relative z-10">
+                <div class="w-20 h-20 rounded-full bg-gradient-to-tr from-primario to-acento flex items-center justify-center shadow-[0_0_30px_#00D9FF]">
+                    <i class="ph ph-fingerprint text-4xl text-white"></i>
+                </div>
+            </div>
+            <h2 class="text-3xl font-bold mb-2 tracking-tight relative z-10">Acceso SIESPRO</h2>
+            <p class="text-textoGray text-sm mb-8 relative z-10">Ingresa un nombre para visualizar el Dashboard</p>
+            
+            <form id="login-form" class="space-y-6 relative z-10">
+                <div class="relative">
+                    <i class="ph ph-user absolute left-4 top-1/2 transform -translate-y-1/2 text-primario"></i>
+                    <input type="text" id="username" placeholder="Tu Nombre" required
+                        class="w-full bg-fondo/50 border border-primario/30 rounded-xl pl-12 pr-4 py-4 text-white focus:outline-none focus:border-primario transition-all">
+                </div>
+                <button type="submit" 
+                    class="w-full py-4 bg-gradient-to-r from-primario to-secundario text-fondo font-extrabold text-lg rounded-xl hover:shadow-[0_0_40px_rgba(0,217,255,0.6)] hover:scale-[1.02] transition-all">
+                    INGRESAR
+                </button>
+            </form>
+        </div>
+    </section>
+
+    <section id="dashboard-section" class="relative py-8 px-4 md:px-8 overflow-hidden hidden-section min-h-screen flex flex-col">
+        <div class="absolute inset-0 opacity-20 pointer-events-none" style="background-image: linear-gradient(#0066FF 1px, transparent 1px), linear-gradient(90deg, #0066FF 1px, transparent 1px); background-size: 50px 50px;"></div>
+        
+        <div class="container mx-auto max-w-[1400px] relative z-10 flex-1 flex flex-col">
+            <div class="text-center mb-8 relative">
+                <h2 class="text-4xl md:text-5xl font-extrabold mb-3 tracking-tight">
+                    Control Total en <span class="text-transparent bg-clip-text bg-gradient-to-r from-primario via-acento to-primario neon-text">Tiempo Real</span>
+                </h2>
+                <div class="flex justify-center items-center gap-3 bg-fondoPanel/50 w-fit mx-auto px-4 py-2 rounded-full border border-white/5 backdrop-blur-md">
+                    <span class="relative flex h-3 w-3">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-3 w-3 bg-success shadow-[0_0_10px_#00FF66]"></span>
+                    </span>
+                    <p class="text-textoGray text-sm font-medium" id="connection-status">Conectado al servidor</p>
+                </div>
+            </div>
+
+            <div class="relative w-full flex-1 rounded-3xl overflow-hidden border border-primario/20 shadow-[0_0_80px_rgba(0,102,255,0.15)] bg-fondoPanel/80 backdrop-blur-xl flex flex-col">
+                
+                <div class="h-16 bg-fondoPanel/50 border-b border-white/10 flex items-center justify-between px-8 sticky top-0 z-20 backdrop-blur-md">
+                    <div class="flex items-center gap-6">
+                        <span class="text-lg font-mono text-primario tracking-[0.2em] font-bold neon-text">SIESPRO_ADMIN</span>
+                    </div>
+                    <div class="flex items-center gap-6 text-sm text-textoGray">
+                        <div class="flex items-center gap-3 bg-fondo/30 px-4 py-2 rounded-full border border-white/10">
+                             <i class="ph ph-user-circle text-2xl text-primario"></i>
+                             <span id="user-display" class="font-bold text-white text-base">Usuario</span>
+                        </div>
+                        <button onclick="logout()" class="hover:text-alerta transition-colors p-2 hover:bg-alerta/10 rounded-full"><i class="ph ph-sign-out text-2xl"></i></button>
+                    </div>
+                </div>
+
+                <div class="flex flex-col lg:flex-row flex-1 overflow-hidden relative">
+                    
+                    <div class="w-full lg:w-72 bg-fondoPanel/30 border-r border-white/10 p-6 flex flex-col gap-4 relative">
+                        <div class="p-4 bg-gradient-to-r from-primario/20 to-secundario/20 text-primario rounded-2xl flex items-center gap-4 font-bold border border-primario/30 shadow-[0_0_20px_rgba(0,217,255,0.1)]">
+                            <i class="ph ph-squares-four text-2xl"></i> Dashboard Main
+                        </div>
+                        
+                        <div class="p-4 bg-white/5 text-offline rounded-2xl flex flex-col gap-2 font-semibold border border-white/5">
+                            <span class="text-xs text-textoGray uppercase tracking-wider">Dispositivos Offline</span>
+                            <div class="flex items-center gap-3">
+                                <i class="ph ph-wifi-slash text-2xl"></i> 
+                                <span id="count-offline" class="text-2xl font-bold text-white">--</span>
+                            </div>
+                        </div>
+
+                        <div class="mt-auto p-6 rounded-2xl bg-gradient-to-br from-fondo to-fondoPanel border border-primario/20">
+                            <p class="text-sm text-textoGray mb-3 font-medium">Estado del Sistema</p>
+                            <div class="flex items-center gap-3">
+                                <p id="api-status-text" class="text-xl font-mono text-success font-bold tracking-wider neon-text">ONLINE</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex-1 p-8 overflow-y-auto bg-transparent flex flex-col gap-8">
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            <div class="bg-fondoPanel/50 p-6 rounded-3xl border border-white/10 relative overflow-hidden group hover:border-success/50 transition-all">
+                                <div class="absolute -right-8 -top-8 p-4 opacity-10 group-hover:opacity-30 transition-all"><i class="ph ph-shield-check text-9xl text-success"></i></div>
+                                <p class="text-textoGray font-medium flex items-center gap-2"><i class="ph ph-check-circle text-success"></i> Estado Normal (Adentro)</p>
+                                <h3 id="count-safe" class="text-5xl font-extrabold text-white mt-3 neon-text">--</h3>
+                            </div>
+
+                            <div class="bg-fondoPanel/50 p-6 rounded-3xl border border-white/10 relative overflow-hidden group hover:border-alerta/50 transition-all">
+                                <div class="absolute -right-8 -top-8 p-4 opacity-10 group-hover:opacity-30 transition-all"><i class="ph ph-siren text-9xl text-alerta"></i></div>
+                                <p class="text-textoGray font-medium flex items-center gap-2"><i class="ph ph-warning-circle text-alerta"></i> Alertas (Afuera)</p>
+                                <h3 id="count-danger" class="text-5xl font-extrabold text-alerta mt-3 neon-text">--</h3>
+                                <div id="alert-badge" class="mt-6 flex items-center gap-3 text-sm text-textoGray bg-white/5 w-fit px-4 py-2 rounded-full border border-white/10 font-bold">
+                                     <i class="ph ph-minus-circle"></i> Cargando...
+                                 </div>
+                            </div>
+
+                            <div class="bg-fondoPanel/50 p-6 rounded-3xl border border-white/10 relative overflow-hidden group hover:border-acento/50 transition-all">
+                                <div class="absolute -right-8 -top-8 p-4 opacity-10 group-hover:opacity-30 transition-all"><i class="ph ph-brain text-9xl text-acento"></i></div>
+                                <p class="text-textoGray font-medium flex items-center gap-2"><i class="ph ph-cpu text-acento"></i> AI Confidence</p>
+                                <h3 class="text-5xl font-extrabold text-acento mt-3 neon-text">89.0%</h3>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 flex-1 min-h-[450px]">
+                            <div class="lg:col-span-2 bg-fondoPanel/50 rounded-3xl border border-white/10 relative overflow-hidden flex items-center justify-center shadow-inner group">
+                                <div class="absolute top-6 left-6 z-20 bg-fondo/80 backdrop-blur-md px-4 py-2 rounded-full border border-primario/30 flex items-center gap-3">
+                                    <span class="text-sm font-mono text-primario font-bold tracking-wider">MONITOR VISUAL EN VIVO</span>
+                                </div>
+                                <div class="absolute inset-0 opacity-30" style="background-image: linear-gradient(#ffffff 1px, transparent 1px), linear-gradient(90deg, #ffffff 1px, transparent 1px); background-size: 60px 60px;"></div>
+                                <div class="absolute w-full h-2 bg-acento/50 shadow-[0_0_30px_#0EEFFF] animate-scan-line z-10 blur-[2px]"></div>
+
+                                <div id="map-container" class="relative w-full h-full">
+                                    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-textoGray/50 text-lg font-medium animate-pulse flex flex-col items-center">
+                                        Esperando telemetría...
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-fondoPanel/50 rounded-3xl border border-white/10 p-6 flex flex-col overflow-hidden relative">
+                                <h4 class="text-white font-bold mb-6 flex justify-between items-center text-lg">
+                                    <span class="flex items-center gap-3"><i class="ph ph-list-dashes text-primario"></i> Activity Log</span>
+                                    <span class="text-xs bg-primario/10 px-3 py-1.5 rounded-full text-primario border border-primario/20 font-mono">REAL-TIME</span>
+                                </h4>
+                                <div class="relative flex-1 overflow-y-auto -mr-4 pr-4" id="log-container"></div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // ⚠️ PEGA TU URL DE RENDER AQUÍ (Sin slash al final)
+        const API_URL = "https://siespro.onrender.com"; 
+
+        const loginSection = document.getElementById('login-section');
+        const dashboardSection = document.getElementById('dashboard-section');
+        let username = localStorage.getItem('siespro_username');
+
+        // --- Auth ---
+        function checkAuth() {
+            if (username) { showDashboard(); } else { loginSection.classList.remove('hidden-section'); }
+        }
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const user = document.getElementById('username').value;
+            if(user.trim() === "") return;
+            username = user;
+            localStorage.setItem('siespro_username', username);
+            showDashboard();
+        });
+        function logout() {
+            localStorage.removeItem('siespro_username');
+            location.reload();
+        }
+        function showDashboard() {
+            loginSection.classList.add('hidden-section');
+            dashboardSection.classList.remove('hidden-section');
+            document.getElementById('user-display').innerText = username || 'Admin';
+            startPolling();
+        }
+
+        // --- Data Fetching ---
+        async function fetchMonitorData() {
+            try {
+                const response = await fetch(`${API_URL}/sensors/monitor`);
+                if (!response.ok) throw new Error("Error en API");
+                
+                // Actualizar estado visual de API
+                document.getElementById('api-status-text').innerText = "ONLINE";
+                document.getElementById('api-status-text').classList.replace('text-alerta', 'text-success');
+                document.getElementById('connection-status').innerText = "Conectado al servidor";
+                
+                return await response.json();
+            } catch (error) {
+                console.error("Error fetching data:", error);
+                document.getElementById('api-status-text').innerText = "OFFLINE";
+                document.getElementById('api-status-text').classList.replace('text-success', 'text-alerta');
+                document.getElementById('connection-status').innerText = "Reconectando...";
+                return null;
+            }
+        }
+
+        // --- UI Update (Lógica de 3 Estados) ---
+        function updateUI(devices) {
+            if (!devices) return;
+
+            // 1. Clasificación
+            const onlineDevices = devices.filter(d => d.is_online);
+            const offlineDevices = devices.filter(d => !d.is_online);
+
+            const safeCount = onlineDevices.filter(d => d.current_prediction === 1).length; // 1 = Adentro
+            const dangerCount = onlineDevices.filter(d => d.current_prediction === 0).length; // 0 = Afuera
+            const offlineCount = offlineDevices.length;
+
+            // 2. Actualizar Contadores
+            document.getElementById('count-safe').innerText = safeCount;
+            document.getElementById('count-danger').innerText = dangerCount;
+            document.getElementById('count-offline').innerText = offlineCount;
+
+            // 3. Actualizar Badge de Alerta
+            const alertBadge = document.getElementById('alert-badge');
+            if (dangerCount > 0) {
+                alertBadge.className = "mt-6 flex items-center gap-3 text-sm text-alerta bg-alerta/20 w-fit px-4 py-2 rounded-full border border-alerta/50 font-bold animate-pulse shadow-[0_0_20px_rgba(255,51,0,0.3)]";
+                alertBadge.innerHTML = `<i class="ph ph-siren text-lg"></i> ${dangerCount} ALERTA(S) ACTIVA(S)`;
+            } else {
+                alertBadge.className = "mt-6 flex items-center gap-3 text-sm text-textoGray bg-white/5 w-fit px-4 py-2 rounded-full border border-white/10 font-bold";
+                alertBadge.innerHTML = `<i class="ph ph-check-circle"></i> Zona Segura`;
+            }
+
+            // 4. Renderizar Log y Mapa
+            const logContainer = document.getElementById('log-container');
+            const mapContainer = document.getElementById('map-container');
+            logContainer.innerHTML = '<div class="h-4"></div>'; 
+            mapContainer.innerHTML = ''; 
+
+            if(devices.length === 0) {
+                 mapContainer.innerHTML = `<div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-textoGray/50 text-lg">Sin dispositivos</div>`;
+            }
+
+            devices.forEach((device) => {
+                const time = new Date(device.last_seen).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second:'2-digit' });
+                
+                // --- LÓGICA DE ESTADOS ---
+                let statusColorBg, statusShadow, textColor, icon, statusText, dotClass, dotStaticClass;
+
+                if (!device.is_online) {
+                    // ESTADO: DESCONECTADO (Gris)
+                    statusColorBg = 'bg-offline';
+                    statusShadow = 'shadow-none';
+                    textColor = 'text-offline font-bold';
+                    icon = '<i class="ph ph-wifi-slash text-offline"></i>';
+                    statusText = 'Desconectado / Sin Señal';
+                    dotClass = 'bg-offline opacity-30'; // Sin animación
+                    dotStaticClass = 'bg-offline border-offline/50 grayscale opacity-50';
+                } 
+                else if (device.current_prediction === 0) {
+                    // ESTADO: PELIGRO (Rojo - Pred 0)
+                    statusColorBg = 'bg-alerta';
+                    statusShadow = 'shadow-[0_0_15px_#FF3300]';
+                    textColor = 'text-alerta font-extrabold neon-text';
+                    icon = '<i class="ph ph-warning-octagon text-alerta"></i>';
+                    statusText = '⚠️ FUERA DE ZONA';
+                    dotClass = 'bg-alerta animate-ping opacity-80';
+                    dotStaticClass = 'bg-alerta shadow-[0_0_25px_#FF3300]';
+                } 
+                else {
+                    // ESTADO: SEGURO (Verde - Pred 1)
+                    statusColorBg = 'bg-success';
+                    statusShadow = 'shadow-[0_0_15px_#00FF66]';
+                    textColor = 'text-white font-semibold';
+                    icon = '<i class="ph ph-check-circle text-success"></i>';
+                    statusText = 'En Zona Segura';
+                    dotClass = 'bg-primario animate-pulse opacity-40';
+                    dotStaticClass = 'bg-primario shadow-[0_0_25px_#00D9FF]';
+                }
+
+                // Render Log Item
+                const logItem = `
+                    <div class="flex items-center gap-4 text-sm p-4 hover:bg-white/5 rounded-2xl transition-all border-b border-white/5 group mb-2 ${!device.is_online ? 'opacity-60' : ''}">
+                        <div class="relative flex h-3 w-3 flex-shrink-0">
+                          <span class="${device.is_online ? 'animate-ping' : ''} absolute inline-flex h-full w-full rounded-full ${statusColorBg} opacity-75"></span>
+                          <span class="relative inline-flex rounded-full h-3 w-3 ${statusColorBg} ${statusShadow}"></span>
+                        </div>
+                        <span class="text-textoGray font-mono text-xs opacity-70">${time}</span>
+                        <div class="flex flex-col flex-1">
+                            <span class="${textColor} text-base tracking-wide flex items-center gap-2">${icon} ${device.bracelet_id}</span>
+                            <span class="text-xs font-medium text-textoGray">${statusText}</span>
+                        </div>
+                    </div>
+                `;
+                logContainer.innerHTML += logItem;
+
+                // Render Map Item
+                const pseudoRandom = (str) => {
+                    let hash = 0;
+                    for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+                    return Math.abs(hash);
+                };
+                const topPos = (pseudoRandom(device.bracelet_id) % 60) + 20;
+                const leftPos = (pseudoRandom(device.bracelet_id + "x") % 60) + 20;
+
+                const dot = document.createElement('div');
+                dot.className = `absolute w-6 h-6 rounded-full ${dotClass} blur-[2px]`;
+                dot.style.top = `${topPos}%`;
+                dot.style.left = `${leftPos}%`;
+                
+                const dotStatic = document.createElement('div');
+                dotStatic.className = `absolute w-4 h-4 rounded-full border-2 border-[#0B1120] ${dotStaticClass} cursor-pointer hover:scale-150 transition-transform z-20 group`;
+                dotStatic.style.top = `${topPos}%`;
+                dotStatic.style.left = `${leftPos}%`;
+                dotStatic.title = `${device.bracelet_id}`;
+
+                mapContainer.appendChild(dot);
+                mapContainer.appendChild(dotStatic);
+            });
+            logContainer.innerHTML += '<div class="h-12"></div>';
+        }
+
+        function startPolling() {
+            fetchMonitorData().then(updateUI);
+            setInterval(async () => {
+                const data = await fetchMonitorData();
+                updateUI(data);
+            }, 3000);
+        }
+
+        checkAuth();
+    </script>
+</body>
+</html>
